@@ -18,6 +18,9 @@ api:
   encryption:
     key: $encryption_key
 
+ota:
+  password: $password
+
 wifi:
   ssid: $wifi_ssid
   password: $wifi_password

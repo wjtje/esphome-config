@@ -1,0 +1,12 @@
+# Currently ble_rssi isn't suported on the main branch
+external_components:
+  - source:
+      type: git
+      url: https://github.com/wjtje/esphome
+      ref: feature/ibeacon-rssi-sensor
+    components: [ ble_rssi ]
+
+# Enable BLE with sort scan time
+esp32_ble_tracker:
+  scan_parameters:
+    duration: 30s

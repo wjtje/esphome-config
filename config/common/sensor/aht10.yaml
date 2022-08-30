@@ -1,0 +1,9 @@
+# node_location: The location of the node
+
+sensor:
+  - platform: aht10
+    temperature:
+      name: $node_location Temperature
+    humidity:
+      name: $node_location Humidity
+    update_interval: 30s
