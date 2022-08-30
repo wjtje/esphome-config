@@ -1,0 +1,6 @@
+packages:
+  restart: github://wjtje/esphome-config/config/common/button/restart.yaml@main
+  safe_mode: github://wjtje/esphome-config/config/common/button/safe_mode.yaml@main
+  uptime: github://wjtje/esphome-config/config/common/sensor/uptime.yaml@main
+  wifi_signal: github://wjtje/esphome-config/config/common/sensor/wifi_signal.yaml@main
+  wifi_info: github://wjtje/esphome-config/config/common/text_sensor/wifi_info.yaml@main

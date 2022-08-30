@@ -1,0 +1,4 @@
+sensor:
+  - platform: wifi_signal
+    name: ${node_name} Wi-Fi Signal Strength
+    update_interval: 60s

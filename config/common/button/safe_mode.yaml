@@ -1,0 +1,3 @@
+button:
+  - platform: safe_mode
+    name: ${node_name} Restart (Safe Mode)
