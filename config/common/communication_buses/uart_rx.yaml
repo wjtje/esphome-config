@@ -1,0 +1,10 @@
+# uart_rx: The pin used for uart receive
+
+# Disable UART logging because we need the UART for something else
+logger:
+  baud_rate: 0
+
+# Define the communication busses
+uart:
+  rx_pin: D4
+  baud_rate: 9600

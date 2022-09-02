@@ -4,9 +4,12 @@ packages:
   i2c: github://wjtje/esphome-config/config/common/communication_buses/i2c.yaml@main
 
 sensor:
-  - platform: aht10
+  - platform: bme280
+    update_interval: 30s
+    address: 0x76
     temperature:
       name: $node_location Temperature
+    pressure:
+      name: $node_location Pressure
     humidity:
       name: $node_location Humidity
-    update_interval: 30s
