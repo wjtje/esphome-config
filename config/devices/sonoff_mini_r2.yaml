@@ -45,12 +45,28 @@ binary_sensor:
       - invert:
     on_press:
       then:
-        - switch.toggle:
-            id: relay_1
+        - if:
+            condition:
+              or:
+                - not:
+                    api.connected:
+                - lambda: |-
+                    return id(direct_mode);
+            then:
+              - switch.toggle:
+                  id: relay_1
     on_release:
       then:
-        - switch.toggle:
-            id: relay_1
+        - if:
+            condition:
+              or:
+                - not:
+                    api.connected:
+                - lambda: |-
+                    return id(direct_mode);
+            then:
+              - switch.toggle:
+                  id: relay_1
 
 light:
   # Red LED
@@ -66,6 +82,11 @@ light:
     output: blue_led
     internal: true # hides the Blue LED from HomeAssistant
 
+globals:
+  - id: direct_mode
+    type: bool
+    initial_value: 'true'
+
 switch:
   # The internal relay
   - platform: output
@@ -73,3 +94,17 @@ switch:
     icon: "mdi:lightning-bolt"
     output: relay_ouput
     id: relay_1
+  # Configuration for internal automatisation
+  - platform: template
+    name: ${node_name} Direct Mode
+    entity_category: config
+    lambda: |-
+      return id(direct_mode);
+    turn_on_action:
+      - globals.set:
+          id: direct_mode
+          value: 'true'
+    turn_off_action:
+      - globals.set:
+          id: direct_mode
+          value: 'false'
