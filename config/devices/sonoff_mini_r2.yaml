@@ -1,0 +1,75 @@
+# node_id:        The id of the name
+# node_name:      The of the node, also used in sensor names
+# encryption_key: A key used for encrypting the api
+# password:       This password is used for the api, ap, ota, and web_server
+# wifi_ssid:      The ssid name of the wifi network
+# wifi_password:  The password of the wifi network
+
+# Include default packages
+packages:
+  device_base: github://wjtje/esphome-config/config/device_base.yaml@main
+  default_components: github://wjtje/esphome-config/config/default_components.yaml@main
+
+# Define the chip
+esp8266:
+  board: esp8285
+
+# Define the two default outputs
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO13
+    inverted: True
+  - id: relay_ouput
+    platform: gpio
+    pin: GPIO12
+
+binary_sensor:
+  # The internal push button
+  - platform: gpio
+    pin: GPIO00
+    id: reset
+    internal: true
+    filters:
+      - invert:
+      - delayed_off: 10ms
+    on_press:
+      - switch.toggle:
+          id: relay_1
+  # The external switch
+  - platform: gpio
+    name: ${node_name} Switch
+    pin: GPIO04
+    id: switch_1
+    filters:
+      - invert:
+    on_press:
+      then:
+        - switch.toggle:
+            id: relay_1
+    on_release:
+      then:
+        - switch.toggle:
+            id: relay_1
+
+light:
+  # Red LED
+  - platform: status_led
+    name: ${node_name} Red LED
+    pin:
+      number: GPIO13
+      inverted: true
+    internal: true
+  # the 4 lines below define the Blue LED light on Sonoff Mini, to expose in HomeAssistant remove line "internal: true"
+  - platform: monochromatic
+    name: ${node_name} Blue LED
+    output: blue_led
+    internal: true # hides the Blue LED from HomeAssistant
+
+switch:
+  # The internal relay
+  - platform: output
+    name: ${node_name} Relay
+    icon: "mdi:lightning-bolt"
+    output: relay_ouput
+    id: relay_1
