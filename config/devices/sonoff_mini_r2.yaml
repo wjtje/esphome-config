@@ -33,6 +33,10 @@ script:
                 event: esphome.sonoff_double_toggle
                 data:
                   node_id: $node_id
+                data_template:
+                  button_id: "{{ button_id }}"
+                variables:
+                  button_id: !lambda 'return id(button_id);'
           else:
             - script.execute: on_switch_toggle_2
   - id: on_switch_toggle_2
@@ -59,6 +63,10 @@ script:
           event: esphome.sonoff_single_toggle
           data:
             node_id: $node_id
+          data_template:
+            button_id: "{{ button_id }}"
+          variables:
+            button_id: !lambda 'return id(button_id);'
 
 # Define the two default outputs
 output:
@@ -91,9 +99,15 @@ binary_sensor:
       - invert:
     on_press:
       then:
+        - globals.set:
+            id: button_id
+            value: '0'
         - script.execute: on_switch_toggle
     on_release:
       then:
+        - globals.set:
+            id: button_id
+            value: '0'
         - script.execute: on_switch_toggle
 
 light:
@@ -117,6 +131,9 @@ globals:
   - id: double_toggle
     type: bool
     initial_value: $double_toggle
+  - id: button_id
+    type: int
+    initial_value: '0'
 
 number:
   - platform: template
