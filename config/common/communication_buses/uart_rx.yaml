@@ -6,5 +6,5 @@ logger:
 
 # Define the communication busses
 uart:
-  rx_pin: D4
+  rx_pin: $uart_rx
   baud_rate: 9600
