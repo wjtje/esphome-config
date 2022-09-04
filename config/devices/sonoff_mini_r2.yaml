@@ -1,9 +1,12 @@
-# node_id:        The id of the name
-# node_name:      The of the node, also used in sensor names
-# encryption_key: A key used for encrypting the api
-# password:       This password is used for the api, ap, ota, and web_server
-# wifi_ssid:      The ssid name of the wifi network
-# wifi_password:  The password of the wifi network
+# node_id:            The id of the name
+# node_name:          The of the node, also used in sensor names
+# encryption_key:     A key used for encrypting the api
+# password:           This password is used for the api, ap, ota, and web_server
+# wifi_ssid:          The ssid name of the wifi network
+# wifi_password:      The password of the wifi network
+# direct_mode:        The inital value for the direct mode option
+# double_toggle:      The inital value for the double toggle option
+# double_toggle_time: The inital toggle speed for the double toggle option
 
 # Include default packages
 packages:
@@ -18,9 +21,32 @@ script:
   - id: on_switch_toggle
     then:
       - if:
+          # Check if other script script is running and if double toggle is enabled
+          condition:
+            and:
+              - script.is_running: on_switch_toggle_2
+              - lambda: 'return id(double_toggle);'
+          then:
+            - script.stop: on_switch_toggle_2
+            # Send the event to Home Assistant
+            - homeassistant.event:
+                event: esphome.sonoff_double_toggle
+                data:
+                  node_id: $node_id
+          else:
+            - script.execute: on_switch_toggle_2
+  - id: on_switch_toggle_2
+    then:
+      # Check if we should wait for double toggle
+      - if:
+          condition:
+            lambda: 'return id(double_toggle);'
+          then:
+            - delay: !lambda 'return id(double_toggle_time).state * 1000;'
+      # Only switch the relay when not connected or direct mode is enabled
+      - if:
           condition:
             or:
-              # Only switch the relay when not connected or direct mode is enabled
               - not:
                   api.connected:
               - lambda: |-
@@ -28,6 +54,11 @@ script:
           then:
             - switch.toggle:
                 id: relay_1
+      #  Send the event to Home Assistant
+      - homeassistant.event:
+          event: esphome.sonoff_single_toggle
+          data:
+            node_id: $node_id
 
 # Define the two default outputs
 output:
@@ -73,16 +104,32 @@ light:
       number: GPIO13
       inverted: true
     internal: true
-  # the 4 lines below define the Blue LED light on Sonoff Mini, to expose in HomeAssistant remove line "internal: true"
+  # the 4 lines below define the Blue LED light on Sonoff Mini, to expose in Home Assistant remove line "internal: true"
   - platform: monochromatic
     name: ${node_name} Blue LED
     output: blue_led
-    internal: true # hides the Blue LED from HomeAssistant
+    internal: true # hides the Blue LED from Home Assistant
 
 globals:
   - id: direct_mode
     type: bool
-    initial_value: 'true'
+    initial_value: $direct_mode
+  - id: double_toggle
+    type: bool
+    initial_value: $double_toggle
+
+number:
+  - platform: template
+    name: ${node_name} Double Toggle Time
+    id: double_toggle_time
+    entity_category: config
+    icon: mdi:cog-transfer
+    unit_of_measurement: s
+    optimistic: true
+    min_value: 0
+    max_value: 1
+    initial_value: $double_toggle_time
+    step: 0.05
 
 switch:
   # The internal relay
@@ -105,4 +152,19 @@ switch:
     turn_off_action:
       - globals.set:
           id: direct_mode
+          value: 'false'
+  # Configuration for the double toggle fuction
+  - platform: template
+    name: ${node_name} Double Toggle
+    entity_category: config
+    icon: mdi:cog-transfer
+    lambda: |-
+      return id(double_toggle);
+    turn_on_action:
+      - globals.set:
+          id: double_toggle
+          value: 'true'
+    turn_off_action:
+      - globals.set:
+          id: double_toggle
           value: 'false'
