@@ -94,7 +94,7 @@ binary_sensor:
   - platform: gpio
     name: ${node_name} Switch
     pin: GPIO04
-    id: switch_1
+    id: switch_0
     filters:
       - invert:
     on_press:

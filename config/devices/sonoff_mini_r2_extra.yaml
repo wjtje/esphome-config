@@ -1,0 +1,18 @@
+platform: gpio
+name: $node_name Switch $number
+pin: $pin
+id: switch_$number
+filters:
+  - invert:
+on_press:
+  then:
+    - globals.set:
+        id: button_id
+        value: $number
+    - script.execute: on_switch_toggle
+on_release:
+  then:
+    - globals.set:
+        id: button_id
+        value: $number
+    - script.execute: on_switch_toggle
