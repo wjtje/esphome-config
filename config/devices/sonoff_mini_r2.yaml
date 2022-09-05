@@ -97,13 +97,7 @@ binary_sensor:
     id: switch_0
     filters:
       - invert:
-    on_press:
-      then:
-        - globals.set:
-            id: button_id
-            value: '0'
-        - script.execute: on_switch_toggle
-    on_release:
+    on_state:
       then:
         - globals.set:
             id: button_id

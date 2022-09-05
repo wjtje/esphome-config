@@ -4,13 +4,7 @@ pin: $pin
 id: switch_$number
 filters:
   - invert:
-on_press:
-  then:
-    - globals.set:
-        id: button_id
-        value: $number
-    - script.execute: on_switch_toggle
-on_release:
+on_state:
   then:
     - globals.set:
         id: button_id
