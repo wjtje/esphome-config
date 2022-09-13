@@ -7,6 +7,7 @@
 # direct_mode:        The inital value for the direct mode option
 # double_toggle:      The inital value for the double toggle option
 # double_toggle_time: The inital toggle speed for the double toggle option
+# relay_restore_mode: The way the relay is restored when the chip is restarted
 
 # Include default packages
 packages:
@@ -148,6 +149,7 @@ switch:
     name: ${node_name} Relay
     icon: mdi:lightning-bolt
     output: relay_ouput
+    restore_mode: $relay_restore_mode
     id: relay_1
   # Configuration for internal automatisation
   - platform: template
