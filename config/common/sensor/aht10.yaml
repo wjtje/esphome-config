@@ -7,6 +7,8 @@ sensor:
   - platform: aht10
     temperature:
       name: $node_location Temperature
+      id: device_temperature
     humidity:
       name: $node_location Humidity
+      id: device_humidity
     update_interval: 30s

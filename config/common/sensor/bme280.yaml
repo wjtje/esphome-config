@@ -9,7 +9,10 @@ sensor:
     address: 0x76
     temperature:
       name: $node_location Temperature
+      id: device_temperature
     pressure:
       name: $node_location Pressure
+      id: device_pressure
     humidity:
       name: $node_location Humidity
+      id: device_humidity

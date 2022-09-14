@@ -7,3 +7,4 @@ sensor:
   - platform: pm1006
     pm_2_5:
       name: $node_location PM 2.5
+      id: device_pm_25
