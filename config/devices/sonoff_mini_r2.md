@@ -22,6 +22,7 @@ substitutions:
   direct_mode: 'true'
   double_toggle: 'true'
   double_toggle_time: '0.15'
+  relay_restore_mode: 'RESTORE_DEFAULT_OFF'
 
 packages:
   device: github://wjtje/esphome-config/config/devices/sonoff_mini_r2.yaml@main
@@ -34,6 +35,7 @@ packages:
 - **direct_mode** (*Required*, `true` or `false`): This enables or disables the direct mode feature. When the API is connected direct mode is always enabled.
 - **double_toggle** (*Required*, `true` or `false`): TThis enables or disables the double toggle feature.
 - **double_toggle_time** (*Required*, number): The maximum time between two toggles for triggering a double toggle.
+- **restore_mode**: (*Required*, string): Control how the relay attempts to restore state on bootup. ([docs](https://esphome.io/components/switch/gpio.html))
 
 ## Home Assistant events
 

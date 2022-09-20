@@ -19,3 +19,7 @@ packages:
     static_ip: github://wjtje/esphome-config/config/static_ip.yaml@main
     default_components: github://wjtje/esphome-config/config/default_components.yaml@main
 ```
+
+## Devices
+
+- [Sonoff Mini R2](config/devices/sonoff_mini_r2.md)
