@@ -36,3 +36,6 @@ web_server:
   auth:
     username: admin
     password: $password
+
+# Activates prometheus /metrics endpoint
+prometheus:
