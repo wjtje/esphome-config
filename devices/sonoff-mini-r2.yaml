@@ -1,0 +1,20 @@
+substitutions:
+  node_id: 
+  node_name: 
+  node_location: 
+
+  encryption_key: # https://esphome.io/components/api.html
+  password: 
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+
+  # static_ip: 10.0.x.x
+  
+  direct_mode: 'true'
+  double_toggle: 'true'
+  double_toggle_time: '0.25'
+  relay_restore_mode: 'RESTORE_DEFAULT_OFF'
+
+packages:
+  device: github://wjtje/esphome-config/config/devices/sonoff_mini_r2.yaml@main
+  # static_ip: github://wjtje/esphome-config/config/static_ip.yaml@main
