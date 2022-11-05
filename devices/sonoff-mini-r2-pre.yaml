@@ -1,14 +1,18 @@
-substitutions:
-  node_id: sonoff-
-  node_name: sonoff
-  password: "12345678"
-
-packages:
-  device_base: github://wjtje/esphome-config/config/device_base_shared.yaml@main
-  default_components: github://wjtje/esphome-config/config/default_components.yaml@main
-
-dashboard_import:
-  package_import_url: github://wjtje/esphome-config/devices/sonoff-mini-r2.yaml@main
+esphome:
+  name: sonoff
+  name_add_mac_suffix: true
 
 esp8266:
   board: esp8285
+
+logger:
+
+ota:
+
+wifi:
+  ap:
+
+captive_portal:
+
+web_server:
+  port: 80
