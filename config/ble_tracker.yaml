@@ -1,11 +1,3 @@
-# Currently ble_rssi isn't suported on the main branch
-external_components:
-  - source:
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: dev
-    components: [ ble_rssi ]
-
 # Enable BLE with sort scan time
 esp32_ble_tracker:
   scan_parameters:
