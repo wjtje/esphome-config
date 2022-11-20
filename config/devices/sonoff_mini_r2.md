@@ -43,11 +43,19 @@ packages:
 When performing a single or double toggle an event is sent to Home Assistant. You can use the following trigger inside automation to listen to the event.
 
 ```yaml
+platform: event
+event_type: esphome.sonoff_toggle
+event_data:
+  node_id: sonoff-mini-r2
+  button_id: 0
+  toggle_amount: 0
+
 # For a single toggle
 platform: event
 event_type: esphome.sonoff_single_toggle
 event_data:
   node_id: sonoff-mini-r2
+  button_id: 0
 
 
 # For a double toggle
@@ -55,6 +63,7 @@ platform: event
 event_type: esphome.sonoff_double_toggle
 event_data:
   node_id: sonoff-mini-r2
+  button_id: 0
 ```
 
 ## Extra button
