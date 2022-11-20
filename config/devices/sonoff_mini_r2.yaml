@@ -20,16 +20,92 @@ esp8266:
 
 script:
   - id: on_switch_toggle
+    mode: restart
+    parameters:
+      button_id: int
+      direct_mode: bool
+      double_toggle: bool
+      double_toggle_time: float
     then:
+      # Logger
+      - logger.log:
+          format: "Called 'on_switch_toggle' with (%i, %i, %f)"
+          args:
+            - button_id
+            - double_toggle
+            - double_toggle_time
+      # Check if double toggle is enabled
       - if:
-          # Check if other script script is running and if double toggle is enabled
+          condition:
+            lambda: |-
+              return double_toggle;
+          then:
+            # Check if data is stored in prev_toggle_millis
+            - if:
+                condition:
+                  lambda: |-
+                    return id(prev_toggle_millis) == 0;
+                then:
+                  # Store current millis
+                  - globals.set:
+                      id: prev_toggle_millis
+                      value: !lambda |-
+                        return millis();
+                else:
+                  # Display time between toggles
+                  - logger.log:
+                      format: "Button %i double toggled in %i ms"
+                      args:
+                        - button_id
+                        - millis() - id(prev_toggle_millis)
+                  # Clear prev_toggle_millis
+                  - globals.set:
+                      id: prev_toggle_millis
+                      value: "0"
+                  # Increase counter
+                  - lambda: |-
+                      id(double_toggle_amount) += 1;
+            # Delay toggle time
+            - delay: !lambda "return double_toggle_time * 1000;"
+      # Display a log mesage
+      - logger.log:
+          format: "Double toggled button %i %i time(s)"
+          args:
+            - button_id
+            - id(double_toggle_amount)
+      # Check if direct mode is enabled or not connected
+      - if:
           condition:
             and:
-              - script.is_running: on_switch_toggle_2
-              - lambda: 'return id(double_toggle);'
+              - or:
+                  - not:
+                      api.connected:
+                  - lambda: |-
+                      return direct_mode;
+              - lambda: |-
+                  return id(double_toggle_amount) == 0;
           then:
-            - script.stop: on_switch_toggle_2
-            # Send the event to Home Assistant
+            - switch.toggle:
+                id: relay_1
+      # Send event to home assistant
+      - if:
+          condition:
+            lambda: |-
+              return id(double_toggle_amount) == 0;
+          then:
+            - homeassistant.event:
+                event: esphome.sonoff_single_toggle
+                data:
+                  node_id: $node_id
+                data_template:
+                  button_id: "{{ button_id }}"
+                variables:
+                  button_id: !lambda "return button_id;"
+      - if:
+          condition:
+            lambda: |-
+              return id(double_toggle_amount) == 1;
+          then:
             - homeassistant.event:
                 event: esphome.sonoff_double_toggle
                 data:
@@ -37,37 +113,24 @@ script:
                 data_template:
                   button_id: "{{ button_id }}"
                 variables:
-                  button_id: !lambda 'return id(button_id);'
-          else:
-            - script.execute: on_switch_toggle_2
-  - id: on_switch_toggle_2
-    then:
-      # Check if we should wait for double toggle
-      - if:
-          condition:
-            lambda: 'return id(double_toggle);'
-          then:
-            - delay: !lambda 'return id(double_toggle_time).state * 1000;'
-      # Only switch the relay when not connected or direct mode is enabled
-      - if:
-          condition:
-            or:
-              - not:
-                  api.connected:
-              - lambda: |-
-                  return id(direct_mode);
-          then:
-            - switch.toggle:
-                id: relay_1
-      #  Send the event to Home Assistant
+                  button_id: !lambda "return button_id;"
       - homeassistant.event:
-          event: esphome.sonoff_single_toggle
+          event: esphome.sonoff_toggle
           data:
             node_id: $node_id
           data_template:
             button_id: "{{ button_id }}"
+            toggle_amount: "{{ toggle_amount }}"
           variables:
-            button_id: !lambda 'return id(button_id);'
+            button_id: !lambda "return button_id;"
+            toggle_amount: !lambda "return id(double_toggle_amount);"
+      # Reset globals
+      - globals.set:
+          id: prev_toggle_millis
+          value: "0"
+      - globals.set:
+          id: double_toggle_amount
+          value: "0"
 
 # Define the two default outputs
 output:
@@ -100,10 +163,12 @@ binary_sensor:
       - invert:
     on_state:
       then:
-        - globals.set:
-            id: button_id
-            value: '0'
-        - script.execute: on_switch_toggle
+        - script.execute:
+            id: on_switch_toggle
+            button_id: 0
+            direct_mode: !lambda "return id(direct_mode);"
+            double_toggle: !lambda "return id(double_toggle);"
+            double_toggle_time: !lambda "return id(double_toggle_time).state;"
 
 light:
   # Red LED
@@ -126,11 +191,15 @@ globals:
   - id: double_toggle
     type: bool
     initial_value: $double_toggle
-  - id: button_id
+  - id: prev_toggle_millis
     type: int
-    initial_value: '0'
+    initial_value: "0"
+  - id: double_toggle_amount
+    type: int
+    initial_value: "0"
 
 number:
+  # The toggle time that counts as a toggle
   - platform: template
     name: ${node_name} Double Toggle Time
     id: double_toggle_time
@@ -161,11 +230,11 @@ switch:
     turn_on_action:
       - globals.set:
           id: direct_mode
-          value: 'true'
+          value: "true"
     turn_off_action:
       - globals.set:
           id: direct_mode
-          value: 'false'
+          value: "false"
   # Configuration for the double toggle fuction
   - platform: template
     name: ${node_name} Double Toggle
@@ -176,8 +245,8 @@ switch:
     turn_on_action:
       - globals.set:
           id: double_toggle
-          value: 'true'
+          value: "true"
     turn_off_action:
       - globals.set:
           id: double_toggle
-          value: 'false'
+          value: "false"

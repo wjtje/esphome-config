@@ -6,6 +6,7 @@
 
 - **Direct Mode**: The switch will directly change the relay
 - **Double Toggle**: Detect a quick double toggle
+- **Multiple Button Support**: Easly add an extra input to your sonoff
 
 ## Basic config
 
@@ -21,7 +22,7 @@ substitutions:
   
   direct_mode: 'true'
   double_toggle: 'true'
-  double_toggle_time: '0.15'
+  double_toggle_time: '0.20'
   relay_restore_mode: 'RESTORE_DEFAULT_OFF'
 
 packages:
@@ -54,6 +55,29 @@ platform: event
 event_type: esphome.sonoff_double_toggle
 event_data:
   node_id: sonoff-mini-r2
+```
+
+## Extra button
+
+To add support for an extra button, you need to add this extra code in your config file. You will need to update the button_id to a higher number, the default button always has id 0.
+
+```yaml
+binary_sensor:
+  # The external switch
+  - platform: gpio
+    name: ${node_name} Switch 1
+    pin: GPIO04
+    id: switch_1
+    filters:
+      - invert:
+    on_state:
+      then:
+        - script.execute:
+            id: on_switch_toggle
+            button_id: 1
+            direct_mode: !lambda 'return id(direct_mode);'
+            double_toggle: !lambda 'return id(double_toggle);'
+            double_toggle_time: !lambda 'return id(double_toggle_time).state;'
 ```
 
 ## Notes
