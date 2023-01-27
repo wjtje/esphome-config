@@ -161,6 +161,7 @@ binary_sensor:
     id: switch_0
     filters:
       - invert:
+      - delayed_off: 10ms
     on_state:
       then:
         - script.execute:
