@@ -32,9 +32,9 @@ packages:
 - **node_id** (*Required*, id): This is the esphome node_id, also used for sending events to Home Assistant.
 - **node_name** (*Required*, string): The name is used for each entity to create unique names.
 - **encryption_key** (*Required*, string): A base64 encryption key used for noise encryption.
-- **password** (*Required*, string): A password used for the API, OTA, AP, and web_server. The default web_server username is admin.
-- **direct_mode** (*Required*, `true` or `false`): This enables or disables the direct mode feature. When the API is connected direct mode is always enabled.
-- **double_toggle** (*Required*, `true` or `false`): TThis enables or disables the double toggle feature.
+- **password** (*Required*, string): A password used for the OTA, AP, and web_server. The default web_server username is admin.
+- **direct_mode** (*Required*, `true` or `false`): This enables or disables the direct mode feature. When the API is not connected direct mode is always enabled.
+- **double_toggle** (*Required*, `true` or `false`): This enables or disables the double toggle feature.
 - **double_toggle_time** (*Required*, number): The maximum time between two toggles for triggering a double toggle.
 - **restore_mode**: (*Required*, string): Control how the relay attempts to restore state on bootup. ([docs](https://esphome.io/components/switch/gpio.html))
 

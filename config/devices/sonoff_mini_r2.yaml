@@ -1,7 +1,7 @@
 # node_id:            The id of the name
 # node_name:          The of the node, also used in sensor names
 # encryption_key:     A key used for encrypting the api
-# password:           This password is used for the api, ap, ota, and web_server
+# password:           This password is used for the ap, ota, and web_server
 # wifi_ssid:          The ssid name of the wifi network
 # wifi_password:      The password of the wifi network
 # direct_mode:        The inital value for the direct mode option

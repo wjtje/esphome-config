@@ -14,7 +14,6 @@ logger:
   level: DEBUG
 
 api:
-  password: $password
   encryption:
     key: $encryption_key
 
@@ -36,6 +35,3 @@ web_server:
   auth:
     username: admin
     password: $password
-
-# Activates prometheus /metrics endpoint
-prometheus:
