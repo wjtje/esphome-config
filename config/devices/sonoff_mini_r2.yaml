@@ -20,59 +20,69 @@ esp8266:
 
 script:
   - id: on_switch_toggle
-    mode: restart
+    mode: parallel
     parameters:
       button_id: int
       direct_mode: bool
       double_toggle: bool
       double_toggle_time: float
+      activation_time: uint32_t
     then:
-      # Logger
-      - logger.log:
-          format: "Called 'on_switch_toggle' with (%i, %i, %f)"
-          args:
-            - button_id
-            - double_toggle
-            - double_toggle_time
-      # Check if double toggle is enabled
       - if:
           condition:
-            lambda: |-
-              return double_toggle;
+            lambda: return double_toggle;
           then:
-            # Check if data is stored in prev_toggle_millis
+            # Display a log mesage
+            - logger.log:
+                format: "Called 'on_switch_toggle' with (%i, %i, %f, %lu)"
+                args:
+                  - button_id
+                  - double_toggle
+                  - double_toggle_time
+                  - activation_time
+            - lambda: |-
+                // Check if this is the first toggle
+                if (id(prev_toggle_millis)[button_id] == 0) {
+                  id(prev_toggle_millis)[button_id] = activation_time;
+                } else if (id(prev_toggle_millis)[button_id] > activation_time - double_toggle_time * 1000) {
+                  id(prev_toggle_millis)[button_id] = activation_time;
+                  id(double_toggle_amount)[button_id] += 1;
+                }
+            # Delay toggle time
+            - delay: !lambda "return double_toggle_time * 1000;"
+            - logger.log:
+                format: "Act: %lu , lst: %lu"
+                level: VERBOSE
+                args:
+                  - activation_time
+                  - id(prev_toggle_millis)[button_id]
+            # Check if this is the correct one
             - if:
                 condition:
                   lambda: |-
-                    return id(prev_toggle_millis) == 0;
+                    return activation_time == id(prev_toggle_millis)[button_id];
                 then:
-                  # Store current millis
-                  - globals.set:
-                      id: prev_toggle_millis
-                      value: !lambda |-
-                        return millis();
-                else:
-                  # Display time between toggles
-                  - logger.log:
-                      format: "Button %i double toggled in %i ms"
-                      args:
-                        - button_id
-                        - millis() - id(prev_toggle_millis)
-                  # Clear prev_toggle_millis
-                  - globals.set:
-                      id: prev_toggle_millis
-                      value: "0"
-                  # Increase counter
                   - lambda: |-
-                      id(double_toggle_amount) += 1;
-            # Delay toggle time
-            - delay: !lambda "return double_toggle_time * 1000;"
+                      id(switch_event_handler)->execute(button_id, direct_mode, id(double_toggle_amount)[button_id]);
+                      // Reset globals
+                      id(prev_toggle_millis)[button_id] = 0;
+                      id(double_toggle_amount)[button_id] = 0;
+          else:
+            - lambda: |-
+                id(switch_event_handler)->execute(button_id, direct_mode, 0);
+  - id: switch_event_handler
+    mode: parallel
+    parameters:
+      button_id: int
+      direct_mode: bool
+      toggle_count: int
+    then:
       # Display a log mesage
       - logger.log:
-          format: "Double toggled button %i %i time(s)"
+          format: "Toggled button %i %i time(s)"
           args:
             - button_id
-            - id(double_toggle_amount)
+            - toggle_count
       # Check if direct mode is enabled or not connected
       - if:
           condition:
@@ -83,7 +93,7 @@ script:
                   - lambda: |-
                       return direct_mode;
               - lambda: |-
-                  return id(double_toggle_amount) == 0;
+                  return toggle_count == 0;
           then:
             - switch.toggle:
                 id: relay_1
@@ -91,7 +101,7 @@ script:
       - if:
           condition:
             lambda: |-
-              return id(double_toggle_amount) == 0;
+              return toggle_count == 0;
           then:
             - homeassistant.event:
                 event: esphome.sonoff_single_toggle
@@ -104,7 +114,7 @@ script:
       - if:
           condition:
             lambda: |-
-              return id(double_toggle_amount) == 1;
+              return toggle_count == 1;
           then:
             - homeassistant.event:
                 event: esphome.sonoff_double_toggle
@@ -123,14 +133,7 @@ script:
             toggle_amount: "{{ toggle_amount }}"
           variables:
             button_id: !lambda "return button_id;"
-            toggle_amount: !lambda "return id(double_toggle_amount);"
-      # Reset globals
-      - globals.set:
-          id: prev_toggle_millis
-          value: "0"
-      - globals.set:
-          id: double_toggle_amount
-          value: "0"
+            toggle_amount: !lambda "return toggle_count;"
 
 # Define the two default outputs
 output:
@@ -170,6 +173,7 @@ binary_sensor:
             direct_mode: !lambda "return id(direct_mode);"
             double_toggle: !lambda "return id(double_toggle);"
             double_toggle_time: !lambda "return id(double_toggle_time).state;"
+            activation_time: !lambda "return millis();"
 
 light:
   # Red LED
@@ -193,11 +197,9 @@ globals:
     type: bool
     initial_value: $double_toggle
   - id: prev_toggle_millis
-    type: int
-    initial_value: "0"
+    type: uint32_t[10]
   - id: double_toggle_amount
-    type: int
-    initial_value: "0"
+    type: int[10]
 
 number:
   # The toggle time that counts as a toggle

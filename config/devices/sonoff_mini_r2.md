@@ -75,7 +75,7 @@ binary_sensor:
   # The external switch
   - platform: gpio
     name: ${node_name} Switch 1
-    pin: GPIO04
+    pin: GPIO14
     id: switch_1
     filters:
       - invert:
@@ -88,6 +88,7 @@ binary_sensor:
             direct_mode: !lambda 'return id(direct_mode);'
             double_toggle: !lambda 'return id(double_toggle);'
             double_toggle_time: !lambda 'return id(double_toggle_time).state;'
+            activation_time: !lambda "return millis();"
 ```
 
 ## Notes
