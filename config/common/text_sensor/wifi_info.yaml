@@ -1,10 +1,10 @@
 text_sensor:
   - platform: wifi_info
     ip_address:
-      name: ${node_name} IP Address
+      name: IP Address
     ssid:
-      name: ${node_name} Wi-Fi SSID
+      name: Wi-Fi SSID
     bssid:
-      name: ${node_name} Wi-Fi BSSID
+      name: Wi-Fi BSSID
     mac_address:
-      name: ${node_name} Wi-Fi MAC
+      name: Wi-Fi MAC

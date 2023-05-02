@@ -9,6 +9,7 @@
 
 esphome:
   name: $node_id
+  friendly_name: $node_name
 
 logger:
   level: DEBUG

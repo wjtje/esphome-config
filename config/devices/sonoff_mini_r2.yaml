@@ -159,7 +159,7 @@ binary_sensor:
           id: relay_1
   # The external switch
   - platform: gpio
-    name: ${node_name} Switch
+    name: Switch
     pin: GPIO04
     id: switch_0
     filters:
@@ -178,14 +178,14 @@ binary_sensor:
 light:
   # Red LED
   - platform: status_led
-    name: ${node_name} Red LED
+    name: Red LED
     pin:
       number: GPIO13
       inverted: true
     internal: true
   # the 4 lines below define the Blue LED light on Sonoff Mini, to expose in Home Assistant remove line "internal: true"
   - platform: monochromatic
-    name: ${node_name} Blue LED
+    name: Blue LED
     output: blue_led
     internal: true # hides the Blue LED from Home Assistant
 
@@ -204,7 +204,7 @@ globals:
 number:
   # The toggle time that counts as a toggle
   - platform: template
-    name: ${node_name} Double Toggle Time
+    name: Double Toggle Time
     id: double_toggle_time
     entity_category: config
     icon: mdi:cog-transfer
@@ -218,14 +218,14 @@ number:
 switch:
   # The internal relay
   - platform: output
-    name: ${node_name} Relay
+    name: Relay
     icon: mdi:lightning-bolt
     output: relay_ouput
     restore_mode: $relay_restore_mode
     id: relay_1
   # Configuration for internal automatisation
   - platform: template
-    name: ${node_name} Direct Mode
+    name: Direct Mode
     entity_category: config
     icon: mdi:cog-transfer
     lambda: |-
@@ -240,7 +240,7 @@ switch:
           value: "false"
   # Configuration for the double toggle fuction
   - platform: template
-    name: ${node_name} Double Toggle
+    name: Double Toggle
     entity_category: config
     icon: mdi:cog-transfer
     lambda: |-

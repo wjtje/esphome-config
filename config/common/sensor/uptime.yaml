@@ -1,3 +1,3 @@
 sensor:
   - platform: uptime
-    name: ${node_name} Uptime
+    name: Uptime
