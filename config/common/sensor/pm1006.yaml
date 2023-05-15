@@ -1,10 +1,8 @@
-# node_location: The location of the node
-
 packages:
   uart: github://wjtje/esphome-config/config/common/communication_buses/uart_rx.yaml@main
 
 sensor:
   - platform: pm1006
     pm_2_5:
-      name: $node_location PM 2.5
+      name: PM 2.5
       id: device_pm_25

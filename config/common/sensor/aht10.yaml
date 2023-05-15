@@ -1,14 +1,12 @@
-# node_location: The location of the node
-
 packages:
   i2c: github://wjtje/esphome-config/config/common/communication_buses/i2c.yaml@main
 
 sensor:
   - platform: aht10
     temperature:
-      name: $node_location Temperature
+      name: Temperature
       id: device_temperature
     humidity:
-      name: $node_location Humidity
+      name: Humidity
       id: device_humidity
     update_interval: 30s

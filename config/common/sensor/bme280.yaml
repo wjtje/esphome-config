@@ -1,5 +1,3 @@
-# node_location: The location of the node
-
 packages:
   i2c: github://wjtje/esphome-config/config/common/communication_buses/i2c.yaml@main
 
@@ -8,16 +6,16 @@ sensor:
     update_interval: 30s
     address: 0x76
     temperature:
-      name: $node_location Temperature
+      name: Temperature
       id: device_temperature
     pressure:
-      name: $node_location Pressure
+      name: Pressure
       id: device_pressure
     humidity:
-      name: $node_location Humidity
+      name: Humidity
       id: device_humidity
   - platform: template
-    name: $node_location Altitude
+    name: Altitude
     lambda: |-
       const float STANDARD_SEA_LEVEL_PRESSURE = 1013.25; //in hPa, see note
       return ((id(device_temperature).state + 273.15) / 0.0065) *
@@ -26,7 +24,7 @@ sensor:
     icon: 'mdi:signal'
     unit_of_measurement: 'm'
   - platform: template
-    name: $node_location Absolute Humidity
+    name: Absolute Humidity
     lambda: |-
       const float mw = 18.01534;    // molar mass of water g/mol
       const float r = 8.31447215;   // Universal gas constant J/mol/K
@@ -38,7 +36,7 @@ sensor:
     icon: 'mdi:water'
     unit_of_measurement: 'g/m³'
   - platform: template
-    name: $node_location Dew Point
+    name: Dew Point
     lambda: |-
       return (243.5*(log(id(device_humidity).state/100)+((17.67*id(device_temperature).state)/
       (243.5+id(device_temperature).state)))/(17.67-log(id(device_humidity).state/100)-
