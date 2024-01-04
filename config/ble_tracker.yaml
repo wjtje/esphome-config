@@ -1,4 +1,0 @@
-# Enable BLE with sort scan time
-esp32_ble_tracker:
-  scan_parameters:
-    duration: 30s
