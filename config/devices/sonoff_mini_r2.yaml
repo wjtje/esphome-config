@@ -137,10 +137,6 @@ script:
 
 # Define the two default outputs
 output:
-  - platform: esp8266_pwm
-    id: blue_led
-    pin: GPIO13
-    inverted: True
   - id: relay_ouput
     platform: gpio
     pin: GPIO12
@@ -183,11 +179,6 @@ light:
       number: GPIO13
       inverted: true
     internal: true
-  # the 4 lines below define the Blue LED light on Sonoff Mini, to expose in Home Assistant remove line "internal: true"
-  - platform: monochromatic
-    name: Blue LED
-    output: blue_led
-    internal: true # hides the Blue LED from Home Assistant
 
 globals:
   - id: direct_mode
