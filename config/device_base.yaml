@@ -3,7 +3,8 @@
 # node_id:        The id of the name
 # node_name:      The of the node, also used in sensor names
 # encryption_key: A key used for encrypting the api
-# password:       This password is used for the api, ap, ota, and web_server
+# ota_password:   This password is used for the ota
+# password:       This password is used for the AP and web interface
 # wifi_ssid:      The ssid name of the wifi network
 # wifi_password:  The password of the wifi network
 
@@ -19,7 +20,7 @@ api:
     key: $encryption_key
 
 ota:
-  password: $password
+  password: $ota_password
 
 wifi:
   ssid: $wifi_ssid

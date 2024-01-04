@@ -1,7 +1,8 @@
 # node_id:            The id of the name
 # node_name:          The of the node, also used in sensor names
 # encryption_key:     A key used for encrypting the api
-# password:           This password is used for the ap, ota, and web_server
+# ota_password:       This password is used for the ota
+# password:           This password is used for the AP and web interface
 # wifi_ssid:          The ssid name of the wifi network
 # wifi_password:      The password of the wifi network
 # direct_mode:        The inital value for the direct mode option
@@ -20,54 +21,46 @@ esp8266:
 
 script:
   - id: on_switch_toggle
-    mode: parallel
+    mode: restart
     parameters:
       button_id: int
       direct_mode: bool
       double_toggle: bool
       double_toggle_time: float
-      activation_time: uint32_t
     then:
       - if:
           condition:
             lambda: return double_toggle;
-          then:
+          then: # Dubble toggle mode
             # Display a log mesage
             - logger.log:
-                format: "Called 'on_switch_toggle' with (%i, %i, %f, %lu)"
+                format: "Called 'on_switch_toggle' with (%i, %i, %f)"
                 args:
                   - button_id
                   - double_toggle
                   - double_toggle_time
-                  - activation_time
+            # Check if it's the same button
             - lambda: |-
-                // Check if this is the first toggle
-                if (id(prev_toggle_millis)[button_id] == 0) {
-                  id(prev_toggle_millis)[button_id] = activation_time;
-                } else if (id(prev_toggle_millis)[button_id] > activation_time - double_toggle_time * 1000) {
-                  id(prev_toggle_millis)[button_id] = activation_time;
-                  id(double_toggle_amount)[button_id] += 1;
+                if (id(s_button_id) != button_id && id(s_button_id) != 255) 
+                  // Execute event handler for old button_id
+                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), id(s_toggle_amount));
+                // Update count
+                if (id(s_button_id) == button_id) {
+                  id(s_toggle_amount) += 1;
+                } else {
+                  // First time (setup global)
+                  id(s_button_id) = button_id;
+                  id(s_direct_mode) = direct_mode;
+                  id(s_toggle_amount) = 0;
                 }
             # Delay toggle time
             - delay: !lambda "return double_toggle_time * 1000;"
-            - logger.log:
-                format: "Act: %lu , lst: %lu"
-                level: VERBOSE
-                args:
-                  - activation_time
-                  - id(prev_toggle_millis)[button_id]
             # Check if this is the correct one
-            - if:
-                condition:
-                  lambda: |-
-                    return activation_time == id(prev_toggle_millis)[button_id];
-                then:
-                  - lambda: |-
-                      id(switch_event_handler)->execute(button_id, direct_mode, id(double_toggle_amount)[button_id]);
-                      // Reset globals
-                      id(prev_toggle_millis)[button_id] = 0;
-                      id(double_toggle_amount)[button_id] = 0;
-          else:
+            - lambda: |-
+                id(switch_event_handler)->execute(button_id, direct_mode, id(s_toggle_amount));
+                // Reset globals
+                id(s_button_id) = 255;
+          else: # Single toggle mode
             - lambda: |-
                 id(switch_event_handler)->execute(button_id, direct_mode, 0);
   - id: switch_event_handler
@@ -166,10 +159,9 @@ binary_sensor:
         - script.execute:
             id: on_switch_toggle
             button_id: 0
-            direct_mode: !lambda "return id(direct_mode);"
-            double_toggle: !lambda "return id(double_toggle);"
+            direct_mode: !lambda "return id(g_direct_mode);"
+            double_toggle: !lambda "return id(g_double_toggle);"
             double_toggle_time: !lambda "return id(double_toggle_time).state;"
-            activation_time: !lambda "return millis();"
 
 light:
   # Red LED
@@ -181,16 +173,22 @@ light:
     internal: true
 
 globals:
-  - id: direct_mode
-    type: bool
-    initial_value: $direct_mode
-  - id: double_toggle
+  - id: g_direct_mode
+    type: int
+    initial_value: '1'
+  - id: g_double_toggle
     type: bool
     initial_value: $double_toggle
-  - id: prev_toggle_millis
-    type: uint32_t[10]
-  - id: double_toggle_amount
-    type: int[10]
+  - id: s_button_id
+    type: int
+    initial_value: '255'
+  - id: s_direct_mode
+    type: bool
+    initial_value: 'false'
+  - id: s_toggle_amount
+    type: int
+    initial_value: '0'
+
 
 number:
   # The toggle time that counts as a toggle
@@ -220,14 +218,15 @@ switch:
     entity_category: config
     icon: mdi:cog-transfer
     lambda: |-
-      return id(direct_mode);
+      return id(g_direct_mode);
+    restore_mode: DISABLED
     turn_on_action:
       - globals.set:
-          id: direct_mode
+          id: g_direct_mode
           value: "true"
     turn_off_action:
       - globals.set:
-          id: direct_mode
+          id: g_direct_mode
           value: "false"
   # Configuration for the double toggle fuction
   - platform: template
@@ -235,12 +234,13 @@ switch:
     entity_category: config
     icon: mdi:cog-transfer
     lambda: |-
-      return id(double_toggle);
+      return id(g_double_toggle);
+    restore_mode: DISABLED
     turn_on_action:
       - globals.set:
-          id: double_toggle
+          id: g_double_toggle
           value: "true"
     turn_off_action:
       - globals.set:
-          id: double_toggle
+          id: g_double_toggle
           value: "false"
