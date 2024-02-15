@@ -38,21 +38,23 @@ script:
             - lambda: |-
                 if (id(s_button_id) != button_id && id(s_button_id) != 255) 
                   // Execute event handler for old button_id
-                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), id(s_toggle_amount));
+                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), 0);
                 // Update count
                 if (id(s_button_id) == button_id) {
-                  id(s_toggle_amount) += 1;
+                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), 1);
+                  // Reset globals
+                  id(s_button_id) = 255;
+                  id(on_switch_toggle).stop();
                 } else {
                   // First time (setup global)
                   id(s_button_id) = button_id;
                   id(s_direct_mode) = direct_mode;
-                  id(s_toggle_amount) = 0;
                 }
             # Delay toggle time
             - delay: !lambda "return double_toggle_time * 1000;"
             # Check if this is the correct one
             - lambda: |-
-                id(switch_event_handler)->execute(button_id, direct_mode, id(s_toggle_amount));
+                id(switch_event_handler)->execute(button_id, direct_mode, 0);
                 // Reset globals
                 id(s_button_id) = 255;
           else: # Single toggle mode
@@ -180,9 +182,6 @@ globals:
   - id: s_direct_mode
     type: bool
     initial_value: 'false'
-  - id: s_toggle_amount
-    type: int
-    initial_value: '0'
 
 
 number:
