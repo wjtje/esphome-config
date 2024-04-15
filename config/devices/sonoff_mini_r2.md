@@ -94,8 +94,8 @@ binary_sensor:
         - script.execute:
             id: on_switch_toggle
             button_id: 1
-            direct_mode: !lambda 'return id(direct_mode);'
-            double_toggle: !lambda 'return id(double_toggle);'
+            direct_mode: !lambda 'return id(g_direct_mode);'
+            double_toggle: !lambda 'return id(g_double_toggle);'
             double_toggle_time: !lambda 'return id(double_toggle_time).state;'
 ```
 
