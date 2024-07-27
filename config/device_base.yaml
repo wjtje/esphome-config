@@ -20,7 +20,8 @@ api:
     key: $encryption_key
 
 ota:
-  password: $ota_password
+  - platform: esphome
+    password: $ota_password
 
 wifi:
   ssid: $wifi_ssid
