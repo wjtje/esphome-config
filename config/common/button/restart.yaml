@@ -1,3 +1,0 @@
-button:
-  - platform: restart
-    name: Restart

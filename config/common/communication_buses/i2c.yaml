@@ -1,8 +1,0 @@
-# sda: The pin for i2c data
-# scl: The pin for i2c clock
-
-i2c:
-  sda: $sda
-  scl: $scl
-  scan: true
-  frequency: 50kHz

@@ -6,46 +6,44 @@
 
 - **Direct Mode**: The switch will directly change the relay
 - **Double Toggle**: Detect a quick double toggle
-- **Multiple Button Support**: Easly add an extra input to your sonoff
+- **Multiple Button Support**: 'Easly' add an extra input to your sonoff
 
 ## Basic config
 
 ```yaml
 substitutions:
-  node_id: sonoff-mini-r2
-  node_name: "Sonoff MINI R2"
+  node_id: sonoff-scullery # See esphome:name
+  node_name: Sonoff Scullery # See esphome:friendly_name
 
-  encryption_key: "Your encryption key"
-  ota_password: "Your OTA password"
-  password: "Your AP/Web interface password"
+  # Passwords
+  encryption_key: "<GenerateMe!>"
+  ota_password: "<GenerateMe!>"
+  web_password: "ChangeME!"
+  ap_password: "ChangeME!"
   wifi_ssid: !secret wifi_ssid
   wifi_password: !secret wifi_password
-  
-  direct_mode: 'true'
-  double_toggle: 'true'
-  double_toggle_time: '0.20'
-  relay_restore_mode: 'RESTORE_DEFAULT_OFF'
+
+  # Settings
+  relay_restore_mode: 'RESTORE_DEFAULT_OFF' # or ALWAYS_OFF, ALWAYS_ON
+  direct_mode: '0' # -1 to disable, else toggle amount
+  double_toggle: 'false'
+  toggle_duration: '250' # Time in ms
 
 packages:
-  wjtje:
-    url: https://github.com/wjtje/esphome-config
-    files:
-      - config/device_base.yaml
-      - config/devices/sonoff_mini_r2.yaml
-      # Optional for extra diagnostic information
-      - config/default_components.yaml
-    refresh: 1d
+  device: github://wjtje/esphome-config/config/devices/sonoff_mini_r2.yaml@main
+
+# Manual IP config:
+# wifi:
+#   manual_ip: 
+#     static_ip: 10.0.1.24
+#     gateway: 10.0.0.1
+#     subnet: 255.255.0.0
 ```
 
-- **node_id** (*Required*, id): This is the esphome node_id, also used for sending events to Home Assistant.
-- **node_name** (*Required*, string): The name is used for each entity to create unique names.
-- **encryption_key** (*Required*, string): A base64 encryption key used for noise encryption.
-- **ota_password** (*Required*, string): A password used for the OTA.
-- **password** (*Required*, string): The password used for the AP and web interface. The default web_server username is admin.
-- **direct_mode** (*Required*, `true` or `false`): This enables or disables the direct mode feature. When the API is not connected direct mode is always enabled.
-- **double_toggle** (*Required*, `true` or `false`): This enables or disables the double toggle feature.
-- **double_toggle_time** (*Required*, number): The maximum time between two toggles for triggering a double toggle.
-- **restore_mode**: (*Required*, string): Control how the relay attempts to restore state on bootup. ([docs](https://esphome.io/components/switch/#config-switch))
+- **relay_restore_mode**: Control how the relay attempts to restore state on bootup. ([docs](https://esphome.io/components/switch/#config-switch))
+- **direct_mode**: This enables or disables the direct mode feature. When the API is not connected direct mode is always enabled.
+- **double_toggle**: This enables or disables the double toggle feature.
+- **toggle_duration**: The maximum time between two toggles for triggering a double toggle.
 
 ## Home Assistant events
 
@@ -92,11 +90,15 @@ binary_sensor:
     on_state:
       then:
         - script.execute:
-            id: on_switch_toggle
+            id: on_switch_toggle_v2
             button_id: 1
-            direct_mode: !lambda 'return id(g_direct_mode);'
-            double_toggle: !lambda 'return id(g_double_toggle);'
-            double_toggle_time: !lambda 'return id(double_toggle_time).state;'
+        # Or if you want different settings for this switch
+        # - script.execute:
+        #     id: on_switch_toggle
+        #     button_id: 1
+        #     direct_mode: 
+        #     double_toggle:
+        #     double_toggle_time:
 ```
 
 ## Notes
@@ -109,4 +111,4 @@ It's possible to trigger events based on the state of the binary sensor, but thi
 
 MIT License
 
-Copyright (c) 2024 Wouter van der Wal
+Copyright (c) 2024 Wouter

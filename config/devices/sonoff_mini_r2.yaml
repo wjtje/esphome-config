@@ -1,240 +1,259 @@
-# node_id:            The id of the name
-# node_name:          The of the node, also used in sensor names
-# encryption_key:     A key used for encrypting the api
-# ota_password:       This password is used for the ota
-# password:           This password is used for the AP and web interface
-# wifi_ssid:          The ssid name of the wifi network
-# wifi_password:      The password of the wifi network
-# direct_mode:        The inital value for the direct mode option
-# double_toggle:      The inital value for the double toggle option
-# double_toggle_time: The inital toggle speed for the double toggle option
-# relay_restore_mode: The way the relay is restored when the chip is restarted
+substitutions:
+  node_id: sonoff-scullery # See esphome:name
+  node_name: Sonoff Scullery # See esphome:friendly_name
 
-# Define the chip
-esp8266:
-  board: esp8285
+  # Passwords
+  encryption_key: "G3ivbQL6z2VwgBl7g7qBo7z4kxcd494AL/OPUFWtOCA="
+  ota_password: "5ef40deb1605190a9254b1238f730217"
+  web_password: "U2Pwt5Wuog"
+  ap_password: "U2Pwt5Wuog"
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
 
-script:
-  - id: on_switch_toggle
-    mode: restart
-    parameters:
-      button_id: int
-      direct_mode: bool
-      double_toggle: bool
-      double_toggle_time: float
-    then:
-      - if:
-          condition:
-            lambda: return double_toggle;
-          then: # Dubble toggle mode
-            # Display a log mesage
-            - logger.log:
-                format: "Called 'on_switch_toggle' with (%i, %i, %f)"
-                args:
-                  - button_id
-                  - double_toggle
-                  - double_toggle_time
-            # Check if it's the same button
-            - lambda: |-
-                if (id(s_button_id) != button_id && id(s_button_id) != 255) 
-                  // Execute event handler for old button_id
-                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), 0);
-                // Update count
-                if (id(s_button_id) == button_id) {
-                  id(switch_event_handler)->execute(id(s_button_id), id(s_direct_mode), 1);
-                  // Reset globals
-                  id(s_button_id) = 255;
-                  id(on_switch_toggle).stop();
-                } else {
-                  // First time (setup global)
-                  id(s_button_id) = button_id;
-                  id(s_direct_mode) = direct_mode;
-                }
-            # Delay toggle time
-            - delay: !lambda "return double_toggle_time * 1000;"
-            # Check if this is the correct one
-            - lambda: |-
-                id(switch_event_handler)->execute(button_id, direct_mode, 0);
-                // Reset globals
-                id(s_button_id) = 255;
-          else: # Single toggle mode
-            - lambda: |-
-                id(switch_event_handler)->execute(button_id, direct_mode, 0);
-  - id: switch_event_handler
-    mode: parallel
-    parameters:
-      button_id: int
-      direct_mode: bool
-      toggle_count: int
-    then:
-      # Display a log mesage
-      - logger.log:
-          format: "Toggled button %i %i time(s)"
-          args:
-            - button_id
-            - toggle_count
-      # Check if direct mode is enabled or not connected
-      - if:
-          condition:
-            and:
-              - or:
-                  - not:
-                      api.connected:
-                  - lambda: |-
-                      return direct_mode;
-              - lambda: |-
-                  return toggle_count == 0;
-          then:
-            - switch.toggle:
-                id: relay_1
-      # Send event to home assistant
-      - if:
-          condition:
-            lambda: |-
-              return toggle_count == 0;
-          then:
-            - homeassistant.event:
-                event: esphome.sonoff_single_toggle
-                data:
-                  node_id: $node_id
-                data_template:
-                  button_id: "{{ button_id }}"
-                variables:
-                  button_id: !lambda "return button_id;"
-      - if:
-          condition:
-            lambda: |-
-              return toggle_count == 1;
-          then:
-            - homeassistant.event:
-                event: esphome.sonoff_double_toggle
-                data:
-                  node_id: $node_id
-                data_template:
-                  button_id: "{{ button_id }}"
-                variables:
-                  button_id: !lambda "return button_id;"
-      - homeassistant.event:
-          event: esphome.sonoff_toggle
-          data:
-            node_id: $node_id
-          data_template:
-            button_id: "{{ button_id }}"
-            toggle_amount: "{{ toggle_amount }}"
-          variables:
-            button_id: !lambda "return button_id;"
-            toggle_amount: !lambda "return toggle_count;"
+  # Settings
+  relay_restore_mode: 'RESTORE_DEFAULT_OFF' # or ALWAYS_OFF, ALWAYS_ON
+  direct_mode: '0' # -1 to disable, else toggle amount
+  double_toggle: 'false'
+  toggle_duration: '250' # Time in ms
 
-# Define the two default outputs
+packages:
+  device: github://wjtje/esphome-config/config/devices/sonoff_mini_r2.yaml@main
+
+###########################
+
 output:
   - id: relay_ouput
     platform: gpio
     pin: GPIO12
 
-binary_sensor:
-  # The internal push button
-  - platform: gpio
-    pin: GPIO00
-    id: reset
-    internal: true
-    filters:
-      - invert:
-      - delayed_off: 10ms
-    on_press:
-      - switch.toggle:
-          id: relay_1
-  # The external switch
-  - platform: gpio
-    name: Switch
-    pin: GPIO04
-    id: switch_0
-    filters:
-      - invert:
-      - delayed_off: 10ms
-    on_state:
-      then:
-        - script.execute:
-            id: on_switch_toggle
-            button_id: 0
-            direct_mode: !lambda "return id(g_direct_mode);"
-            double_toggle: !lambda "return id(g_double_toggle);"
-            double_toggle_time: !lambda "return id(double_toggle_time).state;"
-
 light:
-  # Red LED
-  - platform: status_led
-    name: Red LED
-    pin:
+  - id: red_led
+    platform: status_led
+    internal: true
+    pin: 
       number: GPIO13
       inverted: true
+
+binary_sensor:
+  # The internal push button
+  - id: internal_btn
+    platform: gpio
+    pin: GPIO00
     internal: true
-
-globals:
-  - id: g_direct_mode
-    type: bool
-    initial_value: $direct_mode
-  - id: g_double_toggle
-    type: bool
-    initial_value: $double_toggle
-  - id: s_button_id
-    type: int
-    initial_value: '255'
-  - id: s_direct_mode
-    type: bool
-    initial_value: 'false'
-
-
-number:
-  # The toggle time that counts as a toggle
-  - platform: template
-    name: Double Toggle Time
-    id: double_toggle_time
-    entity_category: config
-    icon: mdi:cog-transfer
-    unit_of_measurement: s
-    optimistic: true
-    min_value: 0
-    max_value: 1
-    initial_value: $double_toggle_time
-    step: 0.05
+    filters: 
+      - invert:
+      - delayed_on_off: 10ms
+    on_press: 
+      then:
+        - switch.toggle: relay_1
+  # The external switch
+  - id: switch_0
+    platform: gpio
+    name: Switch
+    pin: GPIO04
+    filters: 
+      - invert: 
+      - delayed_on_off: 2ms
+    on_state: 
+      then:
+        - script.execute:
+            id: on_switch_toggle_v2
+            button_id: 0
 
 switch:
-  # The internal relay
   - platform: output
     name: Relay
     icon: mdi:lightning-bolt
     output: relay_ouput
     restore_mode: $relay_restore_mode
     id: relay_1
-  # Configuration for internal automatisation
-  - platform: template
-    name: Direct Mode
-    entity_category: config
-    icon: mdi:cog-transfer
-    lambda: |-
-      return id(g_direct_mode);
-    restore_mode: DISABLED
-    turn_on_action:
-      - globals.set:
-          id: g_direct_mode
-          value: "true"
-    turn_off_action:
-      - globals.set:
-          id: g_direct_mode
-          value: "false"
-  # Configuration for the double toggle fuction
-  - platform: template
-    name: Double Toggle
-    entity_category: config
-    icon: mdi:cog-transfer
-    lambda: |-
-      return id(g_double_toggle);
-    restore_mode: DISABLED
-    turn_on_action:
-      - globals.set:
-          id: g_double_toggle
-          value: "true"
-    turn_off_action:
-      - globals.set:
-          id: g_double_toggle
-          value: "false"
+
+###########################
+
+globals:
+  # Script settings
+  - id: g_direct_mode
+    type: int[3]
+    restore_value: false
+    initial_value: '{$direct_mode, -1, -1}' # -1: disabled, >=0: toggle amount
+  - id: g_double_toggle
+    type: bool[3]
+    restore_value: false
+    initial_value: '{$double_toggle, $double_toggle, $double_toggle}'
+  - id: g_toggle_duration
+    type: int[3]
+    restore_value: false
+    initial_value: '{$toggle_duration, $toggle_duration, $toggle_duration}' # Value in ms
+  # Script storage
+  - id: g_prev_time
+    type: uint32_t[3]
+    restore_value: false
+    initial_value: '{0, 0, 0}'
+  - id: g_toggle_count
+    type: int[3]
+    restore_value: false
+    initial_value: '{-1, -1, -1}'
+
+interval:
+  - interval: 10ms
+    then:
+      lambda: |-
+        static const char *TAG = "interval";
+
+        const uint32_t now = millis();
+        const size_t count = sizeof(id(g_toggle_count)) / sizeof(*id(g_toggle_count));
+
+        for (size_t i = 0; i < count; ++i) {
+          const uint32_t difference = now - id(g_prev_time)[i];
+          int &toggle_count = id(g_toggle_count)[i];
+          const uint32_t &toggle_duration = id(g_toggle_duration)[i];
+
+          if (difference > toggle_duration && toggle_count >= 0) {
+            id(send_switch_toggle).execute(i, toggle_count);
+            toggle_count = -1;
+          }
+        }
+
+script:
+  - id: on_switch_toggle
+    mode: queued
+    parameters:
+      button_id: int
+      direct_mode: bool
+      double_toggle: bool
+      double_toggle_time: float # Value in seconds
+    then:
+      - lambda: |-
+          // Store settings
+          id(g_direct_mode)[button_id] = direct_mode ? 0 : -1;
+          id(g_double_toggle)[button_id] = double_toggle;
+          id(g_toggle_duration)[button_id] = double_toggle_time * 1000;
+
+          id(on_switch_toggle_v2).execute(button_id);
+
+  - id: on_switch_toggle_v2
+    mode: queued
+    parameters: 
+      button_id: int
+    then:
+      - lambda: |-
+          static const char *TAG = "on_switch_toggle";
+
+          uint32_t &prev_time = id(g_prev_time)[button_id];
+          int &toggle_count = id(g_toggle_count)[button_id];
+
+          // Calculate difference between button presses
+          const uint32_t now = millis();
+          const uint32_t difference = now - prev_time;
+
+          // Check if there is an unhandled toggle state
+          if (difference >= id(g_toggle_duration)[button_id] && toggle_count >= 0) {
+            ESP_LOGW(TAG, "Detected unhandled toggle state, sending it");
+            // Execute send action
+            id(send_switch_toggle).execute(button_id, toggle_count);
+            toggle_count = -1;
+          }
+
+          // Update switch state
+          prev_time = now;
+          toggle_count++;
+
+          // Check if double toggle is enabled
+          if (!(id(g_double_toggle)[button_id])) {
+            // Enabled, send switch toggle directly
+            id(send_switch_toggle).execute(button_id, toggle_count);
+            toggle_count = -1;
+          }
+
+  - id: send_switch_toggle
+    mode: queued
+    parameters:
+      button_id: int
+      toggle_count: int
+    then:
+      - lambda: |-
+          static const char *TAG = "send_switch_toggle";
+
+          // Check for direct mode
+          if (id(g_direct_mode)[button_id] == toggle_count) {
+            id(relay_1).toggle();
+          }
+
+          ESP_LOGI(TAG, "Sending %i for %i", toggle_count, button_id);
+          
+          // Send 
+          api::HomeassistantServiceResponse event_toggle_type;
+          api::HomeassistantServiceResponse event_toggle_amount;
+          
+          event_toggle_type.service = toggle_count == 0
+            ? "esphome.sonoff_single_toggle"
+            : "esphome.sonoff_double_toggle";
+          event_toggle_type.is_event = true;
+
+          event_toggle_amount.service = "esphome.sonoff_toggle";
+          event_toggle_amount.is_event = true;
+
+          api::HomeassistantServiceMap kv;
+
+          kv.key = "node_id";
+          kv.value = "$node_id";
+          event_toggle_type.data.push_back(kv);
+          event_toggle_amount.data.push_back(kv);
+
+          kv.key = "button_id";
+          kv.value = "{{ id }}";
+          event_toggle_type.data_template.push_back(kv);
+          event_toggle_amount.data_template.push_back(kv);
+
+          kv.key = "toggle_amount";
+          kv.value = "{{ count }}";
+          event_toggle_amount.data_template.push_back(kv);
+
+          kv.key = "id";
+          kv.value = std::to_string(button_id);
+          event_toggle_type.variables.push_back(kv);
+          event_toggle_amount.variables.push_back(kv);
+
+          kv.key = "count";
+          kv.value = std::to_string(toggle_count);
+          event_toggle_amount.variables.push_back(kv);
+
+          id(api_server).send_homeassistant_service_call(event_toggle_type);
+          id(api_server).send_homeassistant_service_call(event_toggle_amount);
+
+###########################
+
+esphome:
+  name: $node_id
+  friendly_name: $node_name
+
+  # build_path: /config/esphome/build/${node_id} # Used for development
+
+esp8266:
+  board: esp8285
+
+logger:
+
+api:
+  encryption:
+    key: $encryption_key
+
+ota:
+  - platform: esphome
+    password: $ota_password
+
+wifi:
+  ssid: $wifi_ssid
+  password: $wifi_password
+
+  ap:
+    ssid: $node_name Fallback Hotspot
+    password: $ap_password
+
+captive_portal:
+    
+web_server:
+  port: 80
+  auth: 
+    username: admin
+    password: $web_password
