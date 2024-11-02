@@ -1,26 +1,3 @@
-substitutions:
-  node_id: sonoff-scullery # See esphome:name
-  node_name: Sonoff Scullery # See esphome:friendly_name
-
-  # Passwords
-  encryption_key: "G3ivbQL6z2VwgBl7g7qBo7z4kxcd494AL/OPUFWtOCA="
-  ota_password: "5ef40deb1605190a9254b1238f730217"
-  web_password: "U2Pwt5Wuog"
-  ap_password: "U2Pwt5Wuog"
-  wifi_ssid: !secret wifi_ssid
-  wifi_password: !secret wifi_password
-
-  # Settings
-  relay_restore_mode: 'RESTORE_DEFAULT_OFF' # or ALWAYS_OFF, ALWAYS_ON
-  direct_mode: '0' # -1 to disable, else toggle amount
-  double_toggle: 'false'
-  toggle_duration: '250' # Time in ms
-
-packages:
-  device: github://wjtje/esphome-config/config/devices/sonoff_mini_r2.yaml@main
-
-###########################
-
 output:
   - id: relay_ouput
     platform: gpio
