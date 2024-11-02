@@ -212,6 +212,7 @@ esp8266:
 logger:
 
 api:
+  id: api_server
   encryption:
     key: $encryption_key
 
