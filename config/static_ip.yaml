@@ -1,9 +1,0 @@
-# This file contains information for a static ip
-
-# static_ip:      The ip of the node
-
-wifi:
-  manual_ip:  
-    static_ip: $static_ip
-    gateway: 10.0.0.1
-    subnet: 255.255.0.0
